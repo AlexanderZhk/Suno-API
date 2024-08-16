@@ -78,3 +78,8 @@ def save_song(aid, output_path="output"):
             # If the chunk is not empty, write it to the file.
             if chunk:
                 output_file.write(chunk)
+
+
+def upload_clip():
+    r = requests.post(f"http://127.0.0.1:8000/upload/")
+    print(r.text)

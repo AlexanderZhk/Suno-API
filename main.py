@@ -2,12 +2,12 @@
 
 import json
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 
 import schemas
 from deps import get_token
-from utils import generate_lyrics, generate_music, get_feed, get_lyrics, get_credits
+from utils import generate_lyrics, generate_music, get_feed, get_lyrics, get_credits,upload_audio, upload_status
 
 app = FastAPI()
 
@@ -96,6 +96,27 @@ async def fetch_lyrics(lid: str, token: str = Depends(get_token)):
 async def fetch_credits(token: str = Depends(get_token)):
     try:
         resp = await get_credits(token)
+        return resp
+    except Exception as e:
+        raise HTTPException(
+            detail=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@app.post("/upload")
+async def upload(token: str = Depends(get_token), file: UploadFile = File(None)):
+    try:
+        resp = await upload_audio(file, token)
+        return resp
+    except Exception as e:
+        raise HTTPException(
+            detail=str(e), status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@app.post("/upload-status")
+async def upload_status_endp(lid: str, token: str = Depends(get_token)):
+    try:
+        resp = await upload_status(lid, token)
         return resp
     except Exception as e:
         raise HTTPException(
