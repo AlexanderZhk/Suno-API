@@ -112,10 +112,15 @@ async def initialize_clip(uid, token):
 
     return status_response
 
+
 async def upload_audio(file: UploadFile, token: str):
     headers = {"Authorization": f"Bearer {token}"}
     api_url = f"{BASE_URL}/api/uploads/audio/"
-    data = {"extension": "mp3"}
+
+    # Determine file extension
+    extension = file.filename.split('.')[-1] if file else 'mp3'
+    data = {"extension": extension}
+
     response = await fetch(api_url, headers, data, method="POST")
 
     if not response.get("is_file_uploaded"):
@@ -129,17 +134,15 @@ async def upload_audio(file: UploadFile, token: str):
         form_data.add_field('policy', fields['policy'])
         form_data.add_field('signature', fields['signature'])
 
-        filename = ""
+        filename = file.filename if file else "example.mp3"
 
         if file:
             file_content = await file.read()
-            form_data.add_field('file', file_content, filename=file.filename, content_type='audio/mpeg')
-            filename = file.filename
         else:
-            with open("./example.mp3", "rb") as f:
-                file_content = f.read()
-                form_data.add_field('file', file_content, filename='example.mp3', content_type='audio/mpeg')
-                filename = "example.mp3"
+            raise Exception("No file!")
+
+        # Always use 'audio/mpeg' as the content type
+        form_data.add_field('file', file_content, filename=filename, content_type='audio/mpeg')
 
         async with aiohttp.ClientSession() as session:
             async with session.post(s3_url, data=form_data) as resp:
@@ -151,29 +154,19 @@ async def upload_audio(file: UploadFile, token: str):
         file_id = key.split('/')[1].split('.')[0]
 
         # Construct the URL for the upload-finish endpoint
-        finish_url = f"https://studio-api.suno.ai/api/uploads/audio/{file_id}/upload-finish/"
-
+        finish_url = f"{BASE_URL}/api/uploads/audio/{file_id}/upload-finish/"
         finish_data = {"upload_type": "file_upload", "upload_filename": filename}
 
         # Make a POST request to the upload-finish endpoint
-        finish_response = await fetch(finish_url, headers=headers,data = finish_data, method="POST")
+        finish_response = await fetch(finish_url, headers=headers, data=finish_data, method="POST")
 
-        if finish_response != {}:
-            print(finish_response)
+        if finish_response:
             return f"[Finish upload failed] {finish_response}"
 
-
-        status_response = await upload_status(file_id,token)
+        status_response = await upload_status(file_id, token)
         if status_response.get("status") != "complete":
-            return {"status":status_response.get("status"),"error":status_response.get("error")}
+            return {"status": status_response.get("status"), "error": status_response.get("error")}
 
-        print(status_response)
-
-
-        respose = await initialize_clip(file_id,token)
-
-        return respose
-
-
+        return await initialize_clip(file_id, token)
 
     return "File already uploaded"
