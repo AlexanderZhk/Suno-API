@@ -1,59 +1,46 @@
-[简体中文](README_ZH.md) | [日本語](README_JA.md)
+# Suno-API Fork
 
-### Unofficial API
+This is a fork of the [Suno-API](https://github.com/SunoAI-API/Suno-API) with the same functionality as the original, but with an added `/upload` endpoint that allows you to upload an audio file to Suno.
 
-This is an unofficial API based on Python and FastAPI. It currently supports generating songs, lyrics, etc.  
-It comes with a built-in token maintenance and keep-alive feature, so you don't have to worry about the token expiring.
+## New /upload Functionality
 
-### Features
+The `/upload` endpoint allows you to upload an audio file to Suno. Below is the brief overview of the new endpoint:
 
-- Automatic token maintenance and keep-alive
-- Fully asynchronous, fast, suitable for later expansion
-- Simple code, easy to maintain, convenient for secondary development
+### Error Response (usually clip too long / too short)
 
+**Code**: 200
 
-### Contact me
-
-[https://t.me/austin2035](https://t.me/austin2035)
-
-
-### Usage
-
-#### Configuration
-
-Edit the `.env.example` file, rename to `.env` and fill in the session_id and cookie.
-
-These are initially obtained from the browser, and will be automatically kept alive later.
-
-![cookie](./images/cover.png)
-
-
-#### Run
-
-Install dependencies 
-
-```bash
-pip3 install -r requirements.txt
+**Response body**:
+```json
+{
+  "status": "error",
+  "error": null
+}
 ```
 
-For this part, refer to the FastAPI documentation on your own.
-```bash
-uvicorn main:app 
+### Success Response
+
+**Code**: 200
+
+**Response body**:
+```json
+{
+  "clip_id": "756c4dc4-f180-4d04-8c44-3a741f7184ba"
+}
 ```
 
-#### Docker
+### cURL Example
 
-```bash
-docker compose build && docker compose up
+```sh
+curl -X 'POST' \
+  'http://127.0.0.1:8000/upload' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'file=@test_T6Jok3.mp3;type=audio/mpeg'
 ```
 
-#### Documentation
+### Request URL
 
-After setting up the service, visit /docs
-
-![docs](./images/docs.png)
-
-### Useful resources
-
-[chatgpt web, midjourney, gpts,tts, whisper,suno-v3](https://github.com/Dooy/chatgpt-web-midjourney-proxy)
-
+```
+http://127.0.0.1:8000/upload
+```
